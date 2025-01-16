@@ -12,8 +12,10 @@ In the following we outline how to use this pipeline to analyse the imaging data
 
 ## Set-up: 
 As outlined above, the analysis pipeline makes use of both python and Fiji. The user will need to make sure that Fiji and anaconda are installed on their machines before running this code. The following links will take you to the pages where you can download the .exe files for both Fiji and Anaconda (which is used to run python). 
-Fiji: https://imagej.net/software/fiji/downloads  
-Anaconda: https://www.anaconda.com/download/success
+
+Fiji: https://imagej.net/software/fiji/downloads     
+
+Anaconda: https://www.anaconda.com/download/success   
 
 ## Create your conda environment: 
 Included in the repository above is the file: tracking_env.yaml.  
