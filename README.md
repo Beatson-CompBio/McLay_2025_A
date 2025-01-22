@@ -24,29 +24,51 @@ Anaconda: https://www.anaconda.com/download/success
 Included in the repository above is the file: tracking_env.yaml.  
 This file can be used to create the anaconda environment needed to run steps 1, 2, and 4 in the above pipeline. A step-by-step guide is now provided for how to generate the conda environment from a .yaml file. 
 
-0. Make sure that anaconda is installed on your computer. 
-1. Open the anaconda prompt.
+1. Make sure that anaconda is installed on your computer.
+
+
+2. Make sure that this repository has been downloaded to your computer.
+     2a. Please copy the folder location of the repository.
+
+   
+3. Open the anaconda prompt.
    The anaconda prompt can be found by searching the program files of your computer, or in windows, by using the search feature.
-2. Change the working directory of anaconda.
-  In the author's experience, the smoothest way to create the conda environment from a .yaml file is to first change the directory of the anaconda prompt to the location of the .yaml file in your computer's directory. This can be done by copying the following code into the anaconda prompt, and then hitting enter:
 
-```
-cd C:/users/RandomUser/Desktop/Mclay_2025_a
-```
-In the above, the section "C:/users/RandomUser/Desktop/Mclay_2025_a" should be substituted for the location to which you have downloaded this repository. 
+   
+4. Change the working directory of anaconda.
+  In the author's experience, the smoothest way to create the conda environment from a .yaml file is to first change the directory of the anaconda prompt to the location of the .yaml file in your computer's directory. Changing the working directory is done using the command ```cd``` in the anaconda prompt, followed by the directory you wish to change to.  
+So to change directory to the folder containing the code for the analysis pipeline, the used would type ```cd```, and then use ```ctrl + v``` to paste the folder path for this analysis sequency to the anaconda prompt. This code is then activated by pushing the enter button.   
 
-3. To create the conda environment from the .yaml file, the following code should be copied into the anaconda prompt: 
+6. To create the conda environment from the .yaml file, the following code should be copied into the anaconda prompt: 
 
 ```
 conda env create -f tracking_env.yaml
 ```
-
 This should start the process of automatically building an anaconda environment called "tracks_env". This process can take several minutes. The image analysis pipeline makes use of the Cellpose library for cell segmentation. The conda enviorment that is built by the tracking_env.yaml file will only utilise the CPU for cell segmentation. If GPU acceleration is something that is of interest for your application there are instructions on the cellpose github repository: https://github.com/MouseLand/cellpose to include the GPU of your computer for the segmentation tasks. 
+
+
+6. Activate the newly created environment by copying the following into the anaconda prompt and hitting enter. 
+```
+conda activate tracks_env
+```
+
+
+7. When opening up Jupyter, a web browser window will open and an instance of jupyter lab will be created. An internet connection is *not* required to use this analysis pipeline. Once Jupyter has opened, the navigation panel on the left of the screen (Highlighted in yellow in the image below) can be used to navigate and open the scripts required to perform steps 1, 2 and 4 from the analysis pipeline.   
+
+Open Jupyter Lab using the following:
+```
+jupyter lab
+```
+   ![Jupyter_lab](https://github.com/user-attachments/assets/3d74a1b0-9611-4455-9611-f769074eb76c)
+
 
 ## Analysis Pipeline 
 In this section the steps of the image analysis pipeline are described. All the sccripts are designed so that the user will need to provide the minimal amount of input to the script. This is in an effort to make the boundries to use as low as possible so that people not familiar with python can make use of the tools developed. 
 
-### Step 1: 1. 231115_sort_incucyte_images: Generate a folder structure for the images
+### Step 1: Generate a folder structure for the images
+
+The script for this part of the analysis is: 1.231115_sort_incucyte_images.ipynb    
+
 If one were to export all the images from a time-lapse experiment in which all 96 wells were imaged every hour for 24 hours with 1 image region recorded for each well from a sartorious incucyte S3, all the files would be exported into a single folder. This would, in our example, result in 2304 image in a sinlge folder. To make looking for the data beloinging to a specific well as simple as possible, the script: 1. 231115_sort_incucyte_images, is designed to look through all the images in the master folder and sort the images into the following file strucutre:
 - Plate Name
    -  Well Number
@@ -55,13 +77,23 @@ If one were to export all the images from a time-lapse experiment in which all 9
        
 The requirements for this script to work is that the user has all of the images of interest in a single folder. Once running, the script will generate a file-dialgoue box and ask the user to select the folder that the time-lapse images are stored in. Once the user has entered this information, the script will automatically sort the images into the folder structure described above. 
 
-### Step 2: 2. 231115_Create_stack_images
+
+### Step 2: Generate time-lapse images 
+The script for this part of the analysis is: 2.231115_Create_stack_images.ipynb    
+
 Once the images from the incucyte have been sorted into the above folder structure we generate a time-lapse image for all of the image positions in all of the wells of the plate. The script is again automated such that the user need only select the "Plate Name" folder when prompted by the code, and a time-lapse image will be generated as .tif files and exported into a new folder within the "Plate Name folder, called "Stack_images". This script relies on the images from the incucyte already being sorted into the folder strucutre created in part 1. 
 
-### Step 3: Batch_Drift_Correction.ijm
+### Step 3: Drift correction
+ImageJ macro for the drift correction is: Batch_Drift_Correction.ijm   
+
 During the analysis of the images in this dataset, we noticed that there is some drift in the images as a result of the incucyte not returning to the exact same imaging position for each time point measurement. To correct the drift in the image, we have created an ImageJ macro, which can be accessed by dragging and dropping the file Batch_Drift_Correction.ijm into Fiji. When this script is run, the user is prompted to input the location of the "Stack_images" folder generated in part 2. The script will then automatically drift correct all the time-lapse images in the folder using the macro "correct 3D drift". The script creates a new folder in the "Plate Name" folder, called "Drift_Correction", within this folder, the drift-corrected images are stored. 
 
-### Step 4: 4.Batch_Cell_seg_Tracking_drift_corrected
+
+
+### Step 4: Image analysis script
+
+The script for this part of the analysis is: 4.Batch_Cell_seg_Tracking_drift_corrected.ipynb   
+
 This script is the provides the analysis of cell motility in a drug screen experiment. The script downloads the image data and segments the phase contrast images using a cellpose model. We chose to re-train the "livecell" model in celpose to gain greater accuracy in terms of segmentation of the cells in our expeirment. Information on how to re-train the segmentation models provided by cellpose can be found on the cellpose github repository. Once the segmentation of the cells in the image has been completed, these cell masks are used by the Btrack package to generate track data for each of the individual cells in the dataset. Using the tracking data generated by Btrack, we are then able to calculate the total displacement and distance travelled for the cells in the image. We use this infomration to also determine the speed and velocity of the cells in the time-lapse image. The script also generates a new folder called "0.Analysis results", which contains the output of the analysis script. A sub-folder is created for each of the wells that has a time-lapse image associated with it, so that reviewing the analysis for each well is made easier. The results of the analysis of cell motility is saved for each of the images as a .csv file. The cell masks generated by cellpose are also saved as .tif files.  
 
 In terms of user input, this script requires the following inputs: 
@@ -71,16 +103,15 @@ In terms of user input, this script requires the following inputs:
 4. The total experimental time in hours.
 
 The first three of these inputs, the user will be prompted to input via a pop-up dialouge box. The final input required from the user needs to be inputted directly into the script. This value is within the 5th block of code in the script, a screen shot of this section of the script is seen below, with the value to change highlighted in yellow. 
+
 ![Screenshot 2025-01-17 172226](https://github.com/user-attachments/assets/8d7f552e-7b09-4083-8dc1-b29bf9d17729)
 
 Once these inputs have been given to the script, the remaining code-blocks in the script can be run to execute the batch image analysis of all drift-corrected images in the "Drift_Correction" folder. 
 
 #### NB: 
-Currently, the well number for each of the time-lapse images is pulled using the exact postion of the well nunmber in the image file name. It is exteremly likely that this will need to be changed in order for the data for your experiment to be saved correctly. 
+Currently in the final analysis script: 4.Batch_Cell_seg_Tracking_drift_corrected.ipynb, the well number for each of the time-lapse images is pulled using the exact postion of the well number in the image file name. It is *exteremly* likely that this will need to be changed in order for the data for your experiment to be saved correctly. The line in the code that needs to be changes is highlighted in the image below. The two numbers in the square bracket tell the code to extract the values from the 9th and 10th position in the file name (code works as run from 9 to 11, but do not include 11), you will need to find the appropriate values in your own image file path to reliably extract the well name from the image file name. 
 
-
-
-
+![change_well_namepng](https://github.com/user-attachments/assets/9f7a5116-1dd8-4224-87e3-9e00de3eddee)
 
 
 
